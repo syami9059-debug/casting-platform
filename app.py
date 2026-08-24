@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import requests
 
 # إعدادات الصفحة
 st.set_page_config(
@@ -8,9 +7,6 @@ st.set_page_config(
     page_icon="🎬", 
     layout="wide"
 )
-
-# 🔗 ضع رابط الـ Web App الخاص بـ Google Sheets بين علامتي التنصيص أدناه:
-GOOGLE_SCRIPT_URL = "الصق_رابطك_السحري_هون"
 
 # ----------------- تصميم الخلفية السينمائية (CSS) -----------------
 page_bg_img = """
@@ -49,6 +45,12 @@ h1, p, label, span {
 </style>
 """
 st.markdown(page_bg_img, unsafe_allow_html=True)
+
+# ----------------- قاعدة البيانات المؤقتة لتخزين الطلبات -----------------
+if 'actors_data' not in st.session_state:
+    st.session_state.actors_data = pd.DataFrame(columns=[
+        'الاسم', 'العمر', 'الجنس', 'المظهر', 'نوع الدور', 'اللهجات', 'رقم الهاتف', 'رابط الفيديو'
+    ])
 
 # القائمة الجانبية
 st.sidebar.title("📌 القائمة الرئيسية")
@@ -91,24 +93,19 @@ if choice == "👤 تقديم طلب (للممثلين)":
             if name.strip() != "":
                 dialects_text = ", ".join(dialects) if dialects else "عادية"
                 
-                # تجهيز البيانات للإرسال إلى جوجل شيتس
-                payload = {
-                    "الاسم": name,
-                    "العمر": age,
-                    "الجنس": gender,
-                    "المظهر": appearance,
-                    "نوع الدور": role_type,
-                    "اللهجات": dialects_text,
-                    "رقم الهاتف": phone,
-                    "رابط الفيديو": video_link
-                }
-                
-                try:
-                    response = requests.post(GOOGLE_SCRIPT_URL, json=payload)
-                except:
-                    pass
-                
-                st.success(f"تم إرسال طلبك بنجاح يا {name} وحفظه في النظام!")
+                # حفظ الطلب مباشرة في جدول النظام الداخلي
+                new_row = pd.DataFrame({
+                    'الاسم': [name], 
+                    'العمر': [age], 
+                    'الجنس': [gender], 
+                    'المظهر': [appearance], 
+                    'نوع الدور': [role_type], 
+                    'اللهجات': [dialects_text],
+                    'رقم الهاتف': [phone],
+                    'رابط الفيديو': [video_link]
+                })
+                st.session_state.actors_data = pd.concat([st.session_state.actors_data, new_row], ignore_index=True)
+                st.success(f"تم إرسال طلبك بنجاح يا {name}!")
             else:
                 st.error("الرجاء إدخال الاسم على الأقل.")
 
@@ -123,9 +120,20 @@ elif choice == "🔐 لوحة تحكم المسؤولة":
         st.success("أهلاً بك يا مديرة الإنتاج!")
         st.write("---")
         
-        st.info("💡 يتم حفظ كافة الطلبات الواردة مباشرة في ملف Google Sheets الخاص بالمنصة.")
-        st.markdown("يمكنك فتح ملف الإكسل المرتبط بالمنصة في أي وقت للاطلاع على كافة الطلبات، فرزها، وتنزيلها كجدول رسمي بكل سهولة.")
+        st.subheader("🔍 أدوات الفرز وعرض الطلبات الواردة")
+        f_role = st.selectbox("فلتر حسب الدور:", ["الكل", "ممثل رئيسي", "ممثل ثانوي", "كومبارس"])
         
+        df = st.session_state.actors_data
+        if f_role != "الكل":
+            df = df[df['نوع الدور'] == f_role]
+            
+        st.markdown(f"**عدد النتائج المطابقة:** {len(df)}")
+        
+        if not df.empty:
+            st.dataframe(df, use_container_width=True)
+        else:
+            st.info("لا توجد طلبات مسجلة حتى الآن. عبي طلب من صفحة الممثلين عشان تشوفه هون فوراً!")
+            
     elif password != "":
         st.error("كلمة المرور غير صحيحة!")
     else:
