@@ -7,7 +7,7 @@ import io
 st.set_page_config(page_title="منصة الكاستينغ", page_icon="🎬", layout="wide")
 
 # 👇👇👇 حط الرابط اللي نسخته من Apps Script هون 👇👇👇
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwP_-Ndr12OlT4VcCWiMNCGUXgtCwFzm5AXnLMwKFu6pwC4Sa6Hoyp1MOl6zGNkNqFL3A/exec"
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxMw7gsDi8vf3dHClvs7-cdt7x7fhNdTXUw_iE1O_i-nGD_yvxk1QRSmlZkfYSz_1OBow/exec"
 
 # رابط قراءة البيانات من الإكسل
 SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1Hn1LQ2UbuLyWvKxefSRts55yWqF2cr7xE7GcMqkIq5w/edit?gid=0#gid=0"
@@ -116,7 +116,7 @@ elif choice == "🔐 لوحة تحكم المسؤولة":
             response = requests.get(SHEET_CSV_URL)
             response.raise_for_status() 
             
-            df = pd.read_csv(io.StringIO(response.text))
+            df = pd.read_csv(io.StringIO(response.text), on_bad_lines='skip')
             
             if not df.empty and 'نوع الدور' in df.columns:
                 f_role = st.selectbox("فلتر حسب الدور:", ["الكل", "ممثل رئيسي", "ممثل ثانوي", "كومبارس"])
