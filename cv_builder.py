@@ -17,12 +17,7 @@ with col1:
     email = st.text_input("البريد الإلكتروني المهني", placeholder="name@example.com")
 
 with col2:
-    st.text("رقم الهاتف")
-    phone_col1, phone_col2 = st.columns([1, 25])
-    with phone_col1:
-        st.markdown("<p style='padding-top: 5px; font-weight: bold;'>+962</p>", unsafe_allow_html=True)
-   with col2:
-    phone_number = st.text_input("رقم الهاتف", placeholder="7xxxxxxxx", value="+962 ")
+    phone_number = st.text_input("رقم الهاتف", value="+962 ")
     linkedin = st.text_input("رابط لينكد إن (LinkedIn)", placeholder="linkedin.com/in/username")
 
 location = st.text_input("مكان الإقامة الحالي (المدينة، الدولة)", placeholder="Amman, Jordan")
@@ -71,13 +66,12 @@ st.info("💡 **تنويه:** قسم مهاراتك بوضوح لتسهيل قر
 st.write("---")
 if st.button("🚀 معالجة وتوليد السيرة الذاتية (ATS)"):
     if full_name and email:
-        full_phone = f"+962{phone_number}" if phone_number else "غير مدخل"
         st.success(f"عاش يا {full_name}! تم جمع بياناتك بنجاح، والنظام جاهز الآن لتحويلها لملف PDF متوافق مع الـ ATS.")
         
         # معاينة سريعة للبيانات المدخلة للتأكد
         with st.expander("🔍 معاينة البيانات المدخلة"):
             st.write(f"**الاسم:** {full_name}")
-            st.write(f"**الإيميل:** {email} | **الهاتف:** {full_phone}")
+            st.write(f"**الإيميل:** {email} | **الهاتف:** {phone_number}")
             st.write(f"**النبذة:** {summary}")
             if has_experience:
                 st.write(f"**الخبرة:** {exp_details}")
