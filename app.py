@@ -1,14 +1,15 @@
 import streamlit as st
 import pandas as pd
 import requests
+import io
 
 # إعدادات الصفحة
 st.set_page_config(page_title="منصة الكاستينغ", page_icon="🎬", layout="wide")
 
-# 👇👇👇 حط الرابط اللي نسخته بين علامتين التنصيص هون 👇👇👇
+# 👇👇👇 حط الرابط اللي نسخته من Apps Script هون 👇👇👇
 GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwP_-Ndr12OlT4VcCWiMNCGUXgtCwFzm5AXnLMwKFu6pwC4Sa6Hoyp1MOl6zGNkNqFL3A/exec"
 
-# رابط قراءة البيانات من الإكسل عشان المسؤولة تشوفهم من أي تلفون
+# رابط قراءة البيانات من الإكسل
 SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1Hn1LQ2UbuLyWvKxefSRts55yWqF2cr7xE7GcMqkIq5w/edit?gid=0#gid=0"
 
 # ----------------- تصميم الخلفية السينمائية (CSS) -----------------
@@ -56,7 +57,6 @@ choice = st.sidebar.radio("اختر القسم:", ["👤 تقديم طلب (لل
 # ----------------- القسم الأول: صفحة الممثلين -----------------
 if choice == "👤 تقديم طلب (للممثلين)":
     st.markdown("<h1 style='text-align: center; color: #ff4d4d !important;'>🎬 نموذج التسجيل للممثلين والكومبارس</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; font-size: 18px;'>قم بتعبئة بياناتك لتصل إلى مسؤولة الكاستينغ مباشرة.</p>", unsafe_allow_html=True)
     st.write("---")
     
     with st.form("actor_form", clear_on_submit=True):
@@ -86,17 +86,16 @@ if choice == "👤 تقديم طلب (للممثلين)":
             if name.strip() != "":
                 dialects_text = ", ".join(dialects) if dialects else "عادية"
                 
-                # إرسال البيانات لجوجل شيتس
                 payload = {
                     "الاسم": name, "العمر": age, "الجنس": gender,
                     "المظهر": appearance, "نوع الدور": role_type,
                     "اللهجات": dialects_text, "رقم الهاتف": phone, "رابط الفيديو": video_link
                 }
                 try:
-                    requests.post(GOOGLE_SCRIPT_URL, json=payload)
-                    st.success(f"تم إرسال طلبك بنجاح يا {name} وحفظه في الإكسل!")
-                except:
-                    st.error("حدث خطأ في الاتصال.")
+                    res = requests.post(GOOGLE_SCRIPT_URL, json=payload)
+                    st.success(f"تم إرسال طلبك بنجاح يا {name}!")
+                except Exception as e:
+                    st.error(f"حدث خطأ أثناء الإرسال: {e}")
             else:
                 st.error("الرجاء إدخال الاسم على الأقل.")
 
@@ -113,8 +112,11 @@ elif choice == "🔐 لوحة تحكم المسؤولة":
         st.subheader("🔍 طلبات الممثلين الواردة")
         
         try:
-            # قراءة البيانات من الإكسل مباشرة (عشان تظهر على أي تلفون)
-            df = pd.read_csv(SHEET_CSV_URL)
+            # القراءة بطريقة أقوى بتكشف الأخطاء
+            response = requests.get(SHEET_CSV_URL)
+            response.raise_for_status() 
+            
+            df = pd.read_csv(io.StringIO(response.text))
             
             if not df.empty and 'نوع الدور' in df.columns:
                 f_role = st.selectbox("فلتر حسب الدور:", ["الكل", "ممثل رئيسي", "ممثل ثانوي", "كومبارس"])
@@ -124,11 +126,12 @@ elif choice == "🔐 لوحة تحكم المسؤولة":
                 st.markdown(f"**عدد الطلبات الكلي:** {len(df)}")
                 st.dataframe(df, use_container_width=True)
             else:
-                st.info("لا توجد طلبات مسجلة حتى الآن.")
+                st.info("الملف موجود بس لسا ما فيه بيانات.. أو عناوين الأعمدة مش متطابقة!")
+                st.write("الأعمدة اللي لقاها الكود هي:", df.columns.tolist())
+                
         except Exception as e:
-            st.warning("جاري جلب الطلبات... إذا كان الملف فارغاً، قدم طلب تجريبي أولاً!")
+            st.error(f"مشكلة في قراءة الإكسل. تفاصيل الخطأ: {e}")
+            st.info("انسخلي الكلام الأحمر اللي طلعلك أو صوره، وبحله بثانية!")
             
     elif password != "":
         st.error("كلمة المرور غير صحيحة!")
-    else:
-        st.info("الرجاء إدخال كلمة المرور لعرض لوحة التحكم.")
