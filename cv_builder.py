@@ -71,7 +71,7 @@ def escape_latex(text):
                 .replace("#", "\\#")
                 .replace("_", "\\_"))
 
-# دالة لتوليد ملف الـ PDF باستخدام قالب LaTeX الآمن والمستقر
+# دالة لتوليد ملف الـ PDF باستخدام قالب LaTeX مع تقارير أخطاء واضحة
 def generate_latex_cv(name, mail, phone, link, loc, summ, e_title, e_comp, e_dur, e_desc, deg, univa, yr, t_skills, s_skills):
     
     latex_code = r"""
@@ -82,6 +82,7 @@ def generate_latex_cv(name, mail, phone, link, loc, summ, e_title, e_comp, e_dur
 \usepackage{enumitem}
 \usepackage{hyperref}
 \usepackage{parskip}
+\usepackage{xcolor}
 
 \pagestyle{empty}
 \titleformat{\section} {\large\bfseries\color{blue!40!black}}{}{0em}{}[]
@@ -106,7 +107,6 @@ SKILLS_PLACEHOLDER
 \end{document}
 """
 
-    # تعبئة البيانات بأمان تامة
     latex_code = latex_code.replace("NAME_PLACEHOLDER", escape_latex(name))
     latex_code = latex_code.replace("MAIL_PLACEHOLDER", escape_latex(mail))
     latex_code = latex_code.replace("PHONE_PLACEHOLDER", escape_latex(phone))
@@ -175,7 +175,6 @@ SUMMARY_TEXT
     else:
         latex_code = latex_code.replace("SKILLS_PLACEHOLDER", "")
 
-    # إنشاء مجلد مؤقت للعمليات
     with tempfile.TemporaryDirectory() as tmpdir:
         tex_path = os.path.join(tmpdir, "cv.tex")
         pdf_path = os.path.join(tmpdir, "cv.pdf")
@@ -184,7 +183,7 @@ SUMMARY_TEXT
             f.write(latex_code)
             
         try:
-            subprocess.run(
+            result = subprocess.run(
                 ["pdflatex", "-interaction=nonstopmode", "-output-directory", tmpdir, tex_path],
                 check=True,
                 stdout=subprocess.PIPE,
@@ -195,7 +194,9 @@ SUMMARY_TEXT
                 with open(pdf_path, "rb") as src, open(permanent_pdf.name, "wb") as dst:
                     dst.write(src.read())
                 return permanent_pdf.name
-        except subprocess.CalledProcessError:
+        except subprocess.CalledProcessError as e:
+            error_output = e.stderr.decode("utf-8", errors="ignore") if e.stderr else "Unknown LaTeX error"
+            st.error(f"خطأ في محرك LaTeX: {error_output[:300]}")
             return None
     return None
 
@@ -218,7 +219,5 @@ if st.button("🚀 توليد السيرة الذاتية عبر LaTeX (ATS PDF)
                         file_name=f"{full_name.replace(' ', '_')}_LaTeX_CV.pdf",
                         mime="application/pdf"
                     )
-            else:
-                st.error("عذراً، حدث خطأ أثناء التوليد. تأكد من إعباء الحقول باللغة الإنجليزية وتجنب الرموز الغريبة.")
     else:
         st.error("الرجاء إدخال الاسم الكامل والبريد الإلكتروني على الأقل لمتابعة التوليد.")
