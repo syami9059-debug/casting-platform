@@ -9,7 +9,7 @@ st.set_page_config(page_title="منصة الكاستينغ", page_icon="🎬", l
 GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwP_-Ndr12OlT4VcCWiMNCGUXgtCwFzm5AXnLMwKFu6pwC4Sa6Hoyp1MOl6zGNkNqFL3A/exec"
 
 # رابط قراءة البيانات من الإكسل عشان المسؤولة تشوفهم من أي تلفون
-SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1Hn1LQ2UbulyWvKxefSRts55yWqF2cr7x7e7GcMqklq5w/export?format=csv&gid=0"
+SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1Hn1LQ2UbuLyWvKxefSRts55yWqF2cr7xE7GcMqkIq5w/edit?gid=0#gid=0"
 
 # ----------------- تصميم الخلفية السينمائية (CSS) -----------------
 page_bg_img = """
