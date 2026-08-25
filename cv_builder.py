@@ -24,7 +24,7 @@ with col2:
     linkedin = st.text_input("رابط لينكد إن (LinkedIn)", placeholder="linkedin.com/in/username")
 
 location = st.text_input("مكان الإقامة الحالي (المدينة، الدولة)", placeholder="Amman, Jordan")
-st.info("💡 **تنويه:** يُفضل كتابة البيانات باللغة الإنجليزية لتتطابق مع معايير أنظمة الـ ATS العالمية.")
+st.info("💡 **تنويه:** يُفضل كتابة البيانات باللغة الإنجليزية بالكامل لتتطابق مع معايير أنظمة الـ ATS العالمية.")
 
 st.write("---")
 
@@ -61,64 +61,70 @@ soft_skills = st.text_input("المهارات الشخصية (مفصولة بف�
 
 st.write("---")
 
-# دالة لتوليد ملف الـ PDF بمواصفات الـ ATS
+# دالة لتنظيف النصوص من أي أحرف قد تسبب مشاكل برمجية
+def clean_text(text):
+    if not text:
+        return ""
+    return text.encode("latin-1", "ignore").decode("latin-1")
+
+# دالة لتوليد ملف الـ PDF بمواصفات الـ ATS مع الحماية
 def create_ats_pdf(name, mail, phone, link, loc, summ, e_title, e_comp, e_dur, e_desc, deg, univa, yr, t_skills, s_skills):
     pdf = FPDF()
     pdf.add_page()
     pdf.set_auto_page_break(auto=True, margin=15)
     
-    # استخدام خط افتراضي نظيف ومتوافق (Helvetica)
+    # استخدام خط افتراضي نظيف (Helvetica)
     pdf.set_font("Helvetica", "B", 18)
-    pdf.cell(0, 10, name, ln=True, align="C")
+    pdf.cell(0, 10, clean_text(name), ln=True, align="C")
     
     pdf.set_font("Helvetica", "", 10)
     contact_info = f"{mail} | {phone} | {loc}"
     if link:
         contact_info += f" | {link}"
-    pdf.cell(0, 6, contact_info, ln=True, align="C")
+    pdf.cell(0, 6, clean_text(contact_info), ln=True, align="C")
     pdf.ln(5)
     
     # دالة فرعية لتنسيق العناوين الرئيسية
     def add_section_header(title):
         pdf.set_font("Helvetica", "B", 12)
         pdf.set_text_color(46, 108, 128)
-        pdf.cell(0, 8, title.upper(), ln=True)
+        pdf.cell(0, 8, clean_text(title.upper()), ln=True)
         pdf.set_text_color(0, 0, 0)
         pdf.set_font("Helvetica", "", 10)
     
     # Summary
     if summ:
         add_section_header("Professional Summary")
-        pdf.multi_cell(0, 5, summ)
+        pdf.multi_cell(0, 5, clean_text(summ))
         pdf.ln(3)
         
     # Experience
     if has_experience and e_title:
         add_section_header("Work Experience")
         pdf.set_font("Helvetica", "B", 10)
-        pdf.cell(0, 5, f"{e_title} - {e_comp}", ln=True)
+        pdf.cell(0, 5, clean_text(f"{e_title} - {e_comp}"), ln=True)
         pdf.set_font("Helvetica", "I", 9)
-        pdf.cell(0, 5, e_dur, ln=True)
+        pdf.cell(0, 5, clean_text(e_dur), ln=True)
         pdf.set_font("Helvetica", "", 10)
-        pdf.multi_cell(0, 5, e_desc)
+        pdf.multi_cell(0, 5, clean_text(e_desc))
         pdf.ln(3)
         
     # Education
     if deg:
         add_section_header("Education")
         pdf.set_font("Helvetica", "B", 10)
-        pdf.cell(0, 5, f"{deg}", ln=True)
+        pdf.cell(0, 5, clean_text(deg), ln=True)
         pdf.set_font("Helvetica", "", 10)
-        pdf.cell(0, 5, f"{univa} | Expected {yr}", ln=True)
+        pdf.cell(0, 5, clean_text(f"{univa} | Expected {yr}"), ln=True)
         pdf.ln(3)
         
     # Skills
     if t_skills or s_skills:
         add_section_header("Skills")
         if t_skills:
-            pdf.multi_cell(0, 5, f"Technical Skills: {t_skills}")
+            pdf.multi_cell(0, 5, clean_text(f"Technical Skills: {t_skills}"))
         if s_skills:
-            pdf.multi_cell(0, 5, f"Soft Skills: {s_skills}")
+            pdf.multi_cell(0, 5, clean_text(f"Soft Skills: {s_skills}"))
             
     # حفظ الملف مؤقتاً
     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
