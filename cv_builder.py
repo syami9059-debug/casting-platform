@@ -1,19 +1,22 @@
 import streamlit as st
+from fpdf import FPDF
+import tempfile
+import os
 
 # إعدادات الصفحة
 st.set_page_config(page_title="صانع السير الذاتية الذكي - ATS", page_icon="📄", layout="centered")
 
 # عنوان الموقع
 st.markdown("<h1 style='text-align: center; color: #2e6c80;'>📄 صانع السير الذاتية المتوافق مع ATS</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center;'>أدخل بياناتك بدقة لضمان تجاوز أنظمة الفرز الآلي للشركات</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center;'>أدخل بياناتك باللغة الإنجليزية لضمان تجاوز أنظمة الفرز الآلي للشركات</p>", unsafe_allow_html=True)
 st.write("---")
 
-# 1. قسم المعلومات الشخصية
+# 1. المعلومات الشخصية
 st.subheader("👤 1. المعلومات الشخصية")
 col1, col2 = st.columns(2)
 
 with col1:
-    full_name = st.text_input("الاسم الكامل (بالإنجليزية يفضل)", placeholder="e.g. Ibrahim Siyam")
+    full_name = st.text_input("الاسم الكامل (بالإنجليزي)", placeholder="e.g. Ibrahim Siyam")
     email = st.text_input("البريد الإلكتروني المهني", placeholder="name@example.com")
 
 with col2:
@@ -21,61 +24,123 @@ with col2:
     linkedin = st.text_input("رابط لينكد إن (LinkedIn)", placeholder="linkedin.com/in/username")
 
 location = st.text_input("مكان الإقامة الحالي (المدينة، الدولة)", placeholder="Amman, Jordan")
-st.info("💡 **تنويه:** استخدم بريداً إلكترونياً احترافياً (اسمك الصريح)، وتأكد من كتابة اسمك بوضوح تام لكي يقرأه روبوت الـ ATS بسهولة.")
+st.info("💡 **تنويه:** يُفضل كتابة البيانات باللغة الإنجليزية لتتطابق مع معايير أنظمة الـ ATS العالمية.")
 
 st.write("---")
 
 # 2. النبذة المهنية
 st.subheader("🎯 2. النبذة المهنية (Professional Summary)")
-summary = st.text_area("اكتب ملخصاً قصيراً (3-4 أسطر) يعكس هويتك المهنية:", 
-                       placeholder="مثال: خريج ماجستير رياضيات بخبرة في التحليل والبرمجة، أبحث عن فرصة لتطبيق مهاراتي التقنية...")
-st.info("💡 **تنويه:** اجعل النبذة مركزة وتحتوي على الكلمات المفتاحية الخاصة بمجالك (مثل: Python, Data Analysis, Teaching) لكي يلتقطها النظام الآلي فوراً.")
+summary = st.text_area("ملخص قصير (3-4 أسطر):", placeholder="e.g. Dedicated mathematics graduate with strong analytical skills...")
 
 st.write("---")
 
 # 3. الخبرات العملية
 st.subheader("💼 3. الخبرات العملية (Work Experience)")
 has_experience = st.checkbox("هل تمتلك خبرات عملية سابقة؟")
-exp_details = ""
+exp_title, exp_company, exp_duration, exp_desc = "", "", "", ""
 if has_experience:
     exp_title = st.text_input("المسمى الوظيفي", placeholder="e.g. Mathematics Teacher")
     exp_company = st.text_input("اسم الشركة أو الجهة", placeholder="e.g. Al-Abbas School")
-    exp_duration = st.text_input("فترة العمل (من - إلى)", placeholder="e.g. Mar 2025 - Jul 2025")
-    exp_desc = st.text_area("أبرز الإنجازات أو المهام التي قمتم بها:", placeholder="- شرح المناهج بأساليب تفاعلية...\n- إدارة وتنظيم الفصول...")
-    exp_details = f"{exp_title} at {exp_company} ({exp_duration}):\n{exp_desc}"
-    st.info("💡 **تنويه:** رتب خبراتك من الأحدث للأقدم، واستخدم أفعال إنجاز واضحة (أدرت، طورت، درّست) بدلاً من الجمل الإنشائية الطويلة.")
+    exp_duration = st.text_input("فترة العمل", placeholder="e.g. Mar 2025 - Jul 2025")
+    exp_desc = st.text_area("أبرز المهام أو الإنجازات:", placeholder="- Managed classrooms...\n- Delivered lectures...")
 
 st.write("---")
 
-# 4. التعليم والأكاديميات
+# 4. التعليم
 st.subheader("🎓 4. التعليم والأكاديميات (Education)")
 edu_degree = st.text_input("الدرجة العلمية والتخصص", placeholder="e.g. Master of Science in Mathematics")
-edu_university = st.text_input("اسم الجامعة والمؤسسة التعليمية", placeholder="e.g. Yarmouk University")
-edu_year = st.text_input("سنة التخرج (أو المتوقعة)", placeholder="e.g. 2027")
-st.info("💡 **تنويه:** اكتب اسم الشهادة والجامعة بدقة رسمية (مثلاً: Bachelor's degree بدلاً من اختصارات قد لا يفهمها الروبوت).")
+edu_university = st.text_input("اسم الجامعة", placeholder="e.g. Yarmouk University")
+edu_year = st.text_input("سنة التخرج", placeholder="e.g. 2027")
 
 st.write("---")
 
-# 5. المهارات التقنية والشخصية
+# 5. المهارات
 st.subheader("🛠️ 5. المهارات (Skills)")
-tech_skills = st.text_input("المهارات التقنية (مفصولة بفواصل)", placeholder="e.g. Python, LaTeX, Excel, Data Analysis, Git")
-soft_skills = st.text_input("المهارات الشخصية (مفصولة بفواصل)", placeholder="e.g. Problem Solving, Teamwork, Communication")
-st.info("💡 **تنويه:** قسم مهاراتك بوضوح لتسهيل قراءتها على مسؤولي التوظيف وأنظمة الفرز الآلي (ATS).")
+tech_skills = st.text_input("المهارات التقنية (مفصولة بفواصل)", placeholder="e.g. Python, LaTeX, Excel, Data Analysis")
+soft_skills = st.text_input("المهارات الشخصية (مفصولة بفواصل)", placeholder="e.g. Problem Solving, Teamwork")
 
-# زر التوليد النهائي
 st.write("---")
-if st.button("🚀 معالجة وتوليد السيرة الذاتية (ATS)"):
-    if full_name and email:
-        st.success(f"عاش يا {full_name}! تم جمع بياناتك بنجاح، والنظام جاهز الآن لتحويلها لملف PDF متوافق مع الـ ATS.")
+
+# دالة لتوليد ملف الـ PDF بمواصفات الـ ATS
+def create_ats_pdf(name, mail, phone, link, loc, summ, e_title, e_comp, e_dur, e_desc, deg, univa, yr, t_skills, s_skills):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_auto_page_break(auto=True, margin=15)
+    
+    # استخدام خط افتراضي نظيف ومتوافق (Helvetica)
+    pdf.set_font("Helvetica", "B", 18)
+    pdf.cell(0, 10, name, ln=True, align="C")
+    
+    pdf.set_font("Helvetica", "", 10)
+    contact_info = f"{mail} | {phone} | {loc}"
+    if link:
+        contact_info += f" | {link}"
+    pdf.cell(0, 6, contact_info, ln=True, align="C")
+    pdf.ln(5)
+    
+    # دالة فرعية لتنسيق العناوين الرئيسية
+    def add_section_header(title):
+        pdf.set_font("Helvetica", "B", 12)
+        pdf.set_text_color(46, 108, 128)
+        pdf.cell(0, 8, title.upper(), ln=True)
+        pdf.set_text_color(0, 0, 0)
+        pdf.set_font("Helvetica", "", 10)
+    
+    # Summary
+    if summ:
+        add_section_header("Professional Summary")
+        pdf.multi_cell(0, 5, summ)
+        pdf.ln(3)
         
-        # معاينة سريعة للبيانات المدخلة للتأكد
-        with st.expander("🔍 معاينة البيانات المدخلة"):
-            st.write(f"**الاسم:** {full_name}")
-            st.write(f"**الإيميل:** {email} | **الهاتف:** {phone_number}")
-            st.write(f"**النبذة:** {summary}")
-            if has_experience:
-                st.write(f"**الخبرة:** {exp_details}")
-            st.write(f"**التعليم:** {edu_degree} - {edu_university} ({edu_year})")
-            st.write(f"**المهارات التقنية:** {tech_skills}")
+    # Experience
+    if has_experience and e_title:
+        add_section_header("Work Experience")
+        pdf.set_font("Helvetica", "B", 10)
+        pdf.cell(0, 5, f"{e_title} - {e_comp}", ln=True)
+        pdf.set_font("Helvetica", "I", 9)
+        pdf.cell(0, 5, e_dur, ln=True)
+        pdf.set_font("Helvetica", "", 10)
+        pdf.multi_cell(0, 5, e_desc)
+        pdf.ln(3)
+        
+    # Education
+    if deg:
+        add_section_header("Education")
+        pdf.set_font("Helvetica", "B", 10)
+        pdf.cell(0, 5, f"{deg}", ln=True)
+        pdf.set_font("Helvetica", "", 10)
+        pdf.cell(0, 5, f"{univa} | Expected {yr}", ln=True)
+        pdf.ln(3)
+        
+    # Skills
+    if t_skills or s_skills:
+        add_section_header("Skills")
+        if t_skills:
+            pdf.multi_cell(0, 5, f"Technical Skills: {t_skills}")
+        if s_skills:
+            pdf.multi_cell(0, 5, f"Soft Skills: {s_skills}")
+            
+    # حفظ الملف مؤقتاً
+    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
+    pdf.output(temp_file.name)
+    return temp_file.name
+
+# زر التوليد والتحميل
+if st.button("🚀 توليد وتحميل السيرة الذاتية (ATS PDF)"):
+    if full_name and email:
+        pdf_path = create_ats_pdf(
+            full_name, email, phone_number, linkedin, location,
+            summary, exp_title, exp_company, exp_duration, exp_desc,
+            edu_degree, edu_university, edu_year, tech_skills, soft_skills
+        )
+        
+        with open(pdf_path, "rb") as pdf_file:
+            st.success("🎉 تم إنشاء سيرتك الذاتية بنجاح ومتوافقة تماماً مع نظام الـ ATS!")
+            st.download_button(
+                label="📥 اضغط هنا لتحميل ملف الـ PDF",
+                data=pdf_file,
+                file_name=f"{full_name.replace(' ', '_')}_CV.pdf",
+                mime="application/pdf"
+            )
     else:
-        st.error("الرجاء إدخال الاسم الكامل والبريد الإلكتروني على الأقل للمتابعة.")
+        st.error("الرجاء إدخال الاسم الكامل والبريد الإلكتروني على الأقل لمتابعة التوليد.")
