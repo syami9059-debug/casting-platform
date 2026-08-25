@@ -1,12 +1,15 @@
 import streamlit as st
 import pandas as pd
+import requests
 
 # إعدادات الصفحة
-st.set_page_config(
-    page_title="منصة الكاستينغ", 
-    page_icon="🎬", 
-    layout="wide"
-)
+st.set_page_config(page_title="منصة الكاستينغ", page_icon="🎬", layout="wide")
+
+# 👇👇👇 حط الرابط اللي نسخته بين علامتين التنصيص هون 👇👇👇
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwP_-Ndr12OlT4VcCWiMNCGUXgtCwFzm5AXnLMwKFu6pwC4Sa6Hoyp1MOl6zGNkNqFL3A/exec"
+
+# رابط قراءة البيانات من الإكسل عشان المسؤولة تشوفهم من أي تلفون
+SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1Hn1LQ2UbulyWvKxefSRts55yWqF2cr7x7e7GcMqklq5w/export?format=csv&gid=0"
 
 # ----------------- تصميم الخلفية السينمائية (CSS) -----------------
 page_bg_img = """
@@ -46,12 +49,6 @@ h1, p, label, span {
 """
 st.markdown(page_bg_img, unsafe_allow_html=True)
 
-# ----------------- قاعدة البيانات المؤقتة لتخزين الطلبات -----------------
-if 'actors_data' not in st.session_state:
-    st.session_state.actors_data = pd.DataFrame(columns=[
-        'الاسم', 'العمر', 'الجنس', 'المظهر', 'نوع الدور', 'اللهجات', 'رقم الهاتف', 'رابط الفيديو'
-    ])
-
 # القائمة الجانبية
 st.sidebar.title("📌 القائمة الرئيسية")
 choice = st.sidebar.radio("اختر القسم:", ["👤 تقديم طلب (للممثلين)", "🔐 لوحة تحكم المسؤولة"])
@@ -80,11 +77,7 @@ if choice == "👤 تقديم طلب (للممثلين)":
             else:
                 appearance = st.selectbox("المظهر العام", ["لحية / ذقن", "حليق تماماً", "عادي"])
                 
-        dialects = st.multiselect(
-            "اللهجات التي تتقنها:",
-            ["أردنية", "فلسطينية", "سورية", "مصرية", "خليجية"]
-        )
-        
+        dialects = st.multiselect("اللهجات التي تتقنها:", ["أردنية", "فلسطينية", "سورية", "مصرية", "خليجية"])
         video_link = st.text_input("رابط الفيديو التعريفي (يوتيوب أو درايف)")
         
         submit_btn = st.form_submit_button("🚀 إرسال الطلب الآن")
@@ -93,19 +86,17 @@ if choice == "👤 تقديم طلب (للممثلين)":
             if name.strip() != "":
                 dialects_text = ", ".join(dialects) if dialects else "عادية"
                 
-                # حفظ الطلب مباشرة في جدول النظام الداخلي
-                new_row = pd.DataFrame({
-                    'الاسم': [name], 
-                    'العمر': [age], 
-                    'الجنس': [gender], 
-                    'المظهر': [appearance], 
-                    'نوع الدور': [role_type], 
-                    'اللهجات': [dialects_text],
-                    'رقم الهاتف': [phone],
-                    'رابط الفيديو': [video_link]
-                })
-                st.session_state.actors_data = pd.concat([st.session_state.actors_data, new_row], ignore_index=True)
-                st.success(f"تم إرسال طلبك بنجاح يا {name}!")
+                # إرسال البيانات لجوجل شيتس
+                payload = {
+                    "الاسم": name, "العمر": age, "الجنس": gender,
+                    "المظهر": appearance, "نوع الدور": role_type,
+                    "اللهجات": dialects_text, "رقم الهاتف": phone, "رابط الفيديو": video_link
+                }
+                try:
+                    requests.post(GOOGLE_SCRIPT_URL, json=payload)
+                    st.success(f"تم إرسال طلبك بنجاح يا {name} وحفظه في الإكسل!")
+                except:
+                    st.error("حدث خطأ في الاتصال.")
             else:
                 st.error("الرجاء إدخال الاسم على الأقل.")
 
@@ -119,20 +110,23 @@ elif choice == "🔐 لوحة تحكم المسؤولة":
     if password == ADMIN_PASSWORD:
         st.success("أهلاً بك يا مديرة الإنتاج!")
         st.write("---")
+        st.subheader("🔍 طلبات الممثلين الواردة")
         
-        st.subheader("🔍 أدوات الفرز وعرض الطلبات الواردة")
-        f_role = st.selectbox("فلتر حسب الدور:", ["الكل", "ممثل رئيسي", "ممثل ثانوي", "كومبارس"])
-        
-        df = st.session_state.actors_data
-        if f_role != "الكل":
-            df = df[df['نوع الدور'] == f_role]
+        try:
+            # قراءة البيانات من الإكسل مباشرة (عشان تظهر على أي تلفون)
+            df = pd.read_csv(SHEET_CSV_URL)
             
-        st.markdown(f"**عدد النتائج المطابقة:** {len(df)}")
-        
-        if not df.empty:
-            st.dataframe(df, use_container_width=True)
-        else:
-            st.info("لا توجد طلبات مسجلة حتى الآن. عبي طلب من صفحة الممثلين عشان تشوفه هون فوراً!")
+            if not df.empty and 'نوع الدور' in df.columns:
+                f_role = st.selectbox("فلتر حسب الدور:", ["الكل", "ممثل رئيسي", "ممثل ثانوي", "كومبارس"])
+                if f_role != "الكل":
+                    df = df[df['نوع الدور'] == f_role]
+                
+                st.markdown(f"**عدد الطلبات الكلي:** {len(df)}")
+                st.dataframe(df, use_container_width=True)
+            else:
+                st.info("لا توجد طلبات مسجلة حتى الآن.")
+        except Exception as e:
+            st.warning("جاري جلب الطلبات... إذا كان الملف فارغاً، قدم طلب تجريبي أولاً!")
             
     elif password != "":
         st.error("كلمة المرور غير صحيحة!")
