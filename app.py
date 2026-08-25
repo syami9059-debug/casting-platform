@@ -6,13 +6,15 @@ import io
 # إعدادات الصفحة
 st.set_page_config(page_title="منصة الكاستينغ", page_icon="🎬", layout="wide")
 
-# 👇👇👇 حط الرابط اللي نسخته من Apps Script هون 👇👇👇
+# 👇👇👇 1. الصق رابط الأداة (Apps Script) اللي بينتهي بكلمة exec هون 👇👇👇
 GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxMw7gsDi8vf3dHClvs7-cdt7x7fhNdTXUw_iE1O_i-nGD_yvxk1QRSmlZkfYSz_1OBow/exec"
 
-# رابط قراءة البيانات من الإكسل
-# حط رابط الإكسل تبعك زي ما هو من شريط المتصفح فوق
+# 👇👇👇 2. الصق رابط جدول الإكسل تبعك زي ما هو من شريط المتصفح فوق 👇👇👇
 MY_SHEET_LINK = "https://docs.google.com/spreadsheets/d/1Hn1LQ2UbuLyWvKxefSRts55yWqF2cr7xE7GcMqkIq5w/edit?gid=0#gid=0"
-SHEET_CSV_URL = MY_SHEET_LINK.replace("edit#gid=", "export?format=csv&gid=")
+
+# السطر هاد بيقص الرابط لحاله وبيحوله لرابط قراءة (لا تعدل عليه اشي)
+SHEET_CSV_URL = MY_SHEET_LINK.split("/edit")[0] + "/export?format=csv&gid=0"
+
 # ----------------- تصميم الخلفية السينمائية (CSS) -----------------
 page_bg_img = """
 <style>
@@ -113,10 +115,10 @@ elif choice == "🔐 لوحة تحكم المسؤولة":
         st.subheader("🔍 طلبات الممثلين الواردة")
         
         try:
-            # القراءة بطريقة أقوى بتكشف الأخطاء
             response = requests.get(SHEET_CSV_URL)
             response.raise_for_status() 
             
+            # أمر التجاهل للأخطاء مضاف هون جاهز مجهز
             df = pd.read_csv(io.StringIO(response.text), on_bad_lines='skip')
             
             if not df.empty and 'نوع الدور' in df.columns:
@@ -127,12 +129,10 @@ elif choice == "🔐 لوحة تحكم المسؤولة":
                 st.markdown(f"**عدد الطلبات الكلي:** {len(df)}")
                 st.dataframe(df, use_container_width=True)
             else:
-                st.info("الملف موجود بس لسا ما فيه بيانات.. أو عناوين الأعمدة مش متطابقة!")
-                st.write("الأعمدة اللي لقاها الكود هي:", df.columns.tolist())
+                st.info("الملف موجود بس لسا ما فيه بيانات..")
                 
         except Exception as e:
-            st.error(f"مشكلة في قراءة الإكسل. تفاصيل الخطأ: {e}")
-            st.info("انسخلي الكلام الأحمر اللي طلعلك أو صوره، وبحله بثانية!")
+            st.error(f"مشكلة في قراءة الإكسل. تأكد من رابط الإكسل المضاف.")
             
     elif password != "":
         st.error("كلمة المرور غير صحيحة!")
