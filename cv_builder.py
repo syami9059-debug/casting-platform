@@ -21,9 +21,8 @@ with col2:
     phone_col1, phone_col2 = st.columns([1, 25])
     with phone_col1:
         st.markdown("<p style='padding-top: 5px; font-weight: bold;'>+962</p>", unsafe_allow_html=True)
-    with phone_col2:
-        phone_number = st.text_input("رقم الهاتف", placeholder="7xxxxxxxx", label_visibility="collapsed")
-    
+   with col2:
+    phone_number = st.text_input("رقم الهاتف", placeholder="7xxxxxxxx", value="+962 ")
     linkedin = st.text_input("رابط لينكد إن (LinkedIn)", placeholder="linkedin.com/in/username")
 
 location = st.text_input("مكان الإقامة الحالي (المدينة، الدولة)", placeholder="Amman, Jordan")
